@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>裝修圖例翻卡遊戲</title>
+<style>
+:root{
+  --bg:#f4f1ea; --panel:#fff; --ink:#26303b; --muted:#6b7683; --line:#d9d4c7;
+  --accent:#d9622b; --accent-ink:#fff; --good:#2e8b57; --bad:#c0392b; --soft:#efe9dc;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#1d2127; --panel:#2a3038; --ink:#e8e6e1; --muted:#9aa3ad; --line:#3d4550; --soft:#343b45; --accent:#ee7b45}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+header{padding:14px 16px 0;max-width:760px;margin:0 auto}
+h1{font-size:20px;margin:0 0 10px}
+h1 small{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+nav{display:flex;gap:6px;border-bottom:2px solid var(--line)}
+nav button{flex:1;padding:10px 4px;border:0;background:none;color:var(--muted);font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+nav button.on{color:var(--accent);border-color:var(--accent)}
+main{max-width:760px;margin:0 auto;padding:14px 16px 40px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+select,input[type=search]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:0}
+.btn{font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn:active{transform:scale(.97)}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ok{background:var(--good);border-color:var(--good);color:#fff}
+.btn.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.muted{color:var(--muted);font-size:14px}
+.hide{display:none!important}
+
+/* 翻卡 */
+.scene{perspective:1200px;margin:6px auto 14px;max-width:520px}
+.card{position:relative;height:min(62vw,300px);min-height:220px;cursor:pointer;transform-style:preserve-3d;transition:transform .5s}
+.card.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;border:1px solid var(--line);
+  box-shadow:0 4px 14px rgba(0,0,0,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center}
+.front{background:#fff}
+.front img{max-width:92%;max-height:80%;object-fit:contain}
+.front .hint{position:absolute;bottom:8px;font-size:12px;color:#8a8f96}
+.back{background:var(--panel);transform:rotateY(180deg)}
+.back .name{font-size:clamp(24px,6vw,34px);font-weight:700;color:var(--accent);word-break:break-all}
+.back .meta{margin-top:10px;color:var(--muted);font-size:14px}
+.back img{position:absolute;right:10px;bottom:10px;max-height:56px;max-width:35%;background:#fff;border-radius:6px;padding:3px;opacity:.9}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.prog{height:8px;background:var(--soft);border-radius:6px;overflow:hidden;margin:4px 0 10px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+/* 問答 */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.setup label{display:block;margin:10px 0 4px;font-weight:600}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{font:inherit;padding:7px 14px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.qhead{display:flex;justify-content:space-between;font-weight:600;margin-bottom:6px}
+.qcat{text-align:center;margin-bottom:8px}
+.qcat span{display:inline-block;padding:3px 14px;border-radius:20px;background:var(--soft);color:var(--accent);font-weight:700;font-size:15px;border:1px solid var(--line)}
+.qimg{background:#fff;border:1px solid var(--line);border-radius:14px;height:min(52vw,230px);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.qimg img{max-width:92%;max-height:88%}
+.qtext{font-size:26px;font-weight:700;text-align:center;padding:18px 8px;color:var(--accent);word-break:break-all}
+.opts{display:grid;gap:10px}
+.opts.img{grid-template-columns:1fr 1fr}
+.opt{font:inherit;font-size:17px;font-weight:600;padding:13px 12px;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-align:left}
+.opts.img .opt{background:#fff;height:min(30vw,130px);display:flex;align-items:center;justify-content:center;padding:6px}
+.opts.img .opt img{max-width:100%;max-height:100%;pointer-events:none}
+.opt.right{border-color:var(--good);background:rgba(46,139,87,.18)}
+.opts.img .opt.right{background:#e3f4ea}
+.opt.wrong{border-color:var(--bad);background:rgba(192,57,43,.16)}
+.opts.img .opt.wrong{background:#fbe4e0}
+.opt:disabled{cursor:default}
+.fb{min-height:28px;margin:12px 0 6px;font-weight:700;text-align:center}
+.fb.g{color:var(--good)}.fb.b{color:var(--bad)}
+.score{font-size:44px;font-weight:800;color:var(--accent);text-align:center;margin:6px 0}
+.wlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+
+/* 圖鑑 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cell{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px}
+.cell .im{background:#fff;height:90px;display:flex;align-items:center;justify-content:center;padding:4px}
+.cell .im img{max-width:100%;max-height:100%}
+.cell .nm{padding:6px 8px;font-weight:600;text-align:center}
+.cell .ct{padding:0 8px 6px;text-align:center;color:var(--muted);font-size:12px}
+.cell.known{outline:2px solid var(--good)}
+</style>
+</head>
+<body>
+<header>
+  <h1>裝修圖例翻卡遊戲<small>CNS 11567 設備圖例 · <span id="total"></span> 張</small></h1>
+  <nav id="nav">
+    <button data-v="learn" class="on">翻卡學習</button>
+    <button data-v="quiz">問答遊戲</button>
+    <button data-v="book">圖例總覽</button>
+  </nav>
+</header>
+<main>
+  <!-- 翻卡學習 -->
+  <section id="v-learn">
+    <div class="bar">
+      <select id="l-cat"></select>
+      <select id="l-mode">
+        <option value="all">全部卡片</option>
+        <option value="unknown">只看還不熟的</option>
+      </select>
+      <button class="btn" id="l-shuffle">🔀 洗牌</button>
+    </div>
+    <div class="prog"><i id="l-prog"></i></div>
+    <div class="muted" id="l-info" style="text-align:center;margin-bottom:6px"></div>
+    <div class="scene"><div class="card" id="card">
+      <div class="face front"><img id="c-img" alt="圖例"><span class="hint">點一下翻面 · 這是什麼圖例?</span></div>
+      <div class="face back"><div class="name" id="c-name"></div><div class="meta" id="c-meta"></div><img id="c-img2" alt=""></div>
+    </div></div>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn" id="l-prev">← 上一張</button>
+      <button class="btn bad" id="l-no">還不熟</button>
+      <button class="btn ok" id="l-yes">記住了</button>
+      <button class="btn" id="l-next">下一張 →</button>
+    </div>
+    <div class="muted" style="text-align:center">快捷鍵:空白鍵翻面、← → 切換、↑ 記住了、↓ 還不熟<br>
+      <a href="#" id="l-reset" style="color:var(--muted)">清除學習紀錄</a></div>
+  </section>
+
+  <!-- 問答遊戲 -->
+  <section id="v-quiz" class="hide">
+    <div class="panel setup" id="q-setup">
+      <label>題型</label>
+      <div class="seg" id="s-type">
+        <button data-v="img2name" class="on">看圖選名稱</button>
+        <button data-v="name2img">看名稱選圖</button>
+        <button data-v="mix">混合</button>
+      </div>
+      <label>範圍</label>
+      <select id="q-cat" style="width:100%"></select>
+      <label>題數</label>
+      <div class="seg" id="s-num">
+        <button data-v="10" class="on">10 題</button>
+        <button data-v="20">20 題</button>
+        <button data-v="0">範圍內全部</button>
+      </div>
+      <p class="muted" id="q-best"></p>
+      <button class="btn main" id="q-start" style="width:100%;margin-top:6px">開始挑戰</button>
+    </div>
+
+    <div class="hide" id="q-play">
+      <div class="qhead"><span id="q-no"></span><span id="q-sc"></span></div>
+      <div class="prog"><i id="q-prog"></i></div>
+      <div id="q-body"></div>
+      <div class="fb" id="q-fb"></div>
+      <button class="btn main hide" id="q-next" style="width:100%"></button>
+    </div>
+
+    <div class="panel hide" id="q-end">
+      <div class="muted" style="text-align:center" id="e-title"></div>
+      <div class="score" id="e-score"></div>
+      <div style="text-align:center;font-weight:600" id="e-msg"></div>
+      <div id="e-wrong"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn main" id="e-retry">再挑戰一次</button>
+        <button class="btn hide" id="e-redo">練習答錯的題目</button>
+        <button class="btn" id="e-back">回設定</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 圖例總覽 -->
+  <section id="v-book" class="hide">
+    <div class="bar">
+      <select id="b-cat"></select>
+      <input type="search" id="b-q" placeholder="搜尋名稱…" style="flex:1">
+    </div>
+    <div class="muted" id="b-info" style="margin-bottom:8px"></div>
+    <div class="grid" id="b-grid"></div>
+  </section>
+</main>
+
+<script src="cards.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const CATS = ['全部', ...new Set(CARDS.map(c => c.cat))];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('zhuangxiu.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('zhuangxiu.' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let known = new Set(store.get('known', []));
+const saveKnown = () => store.set('known', [...known]);
+const inCat = cat => cat === '全部' ? CARDS : CARDS.filter(c => c.cat === cat);
+
+$('total').textContent = CARDS.length;
+['l-cat', 'q-cat', 'b-cat'].forEach(id => {
+  $(id).innerHTML = CATS.map(c => `<option>${c}</option>`).join('');
+});
+
+/* ---------- 分頁 ---------- */
+$('nav').onclick = e => {
+  const v = e.target.dataset.v; if (!v) return;
+  [...$('nav').children].forEach(b => b.classList.toggle('on', b === e.target));
+  ['learn', 'quiz', 'book'].forEach(n => $('v-' + n).classList.toggle('hide', n !== v));
+  if (v === 'book') renderBook();
+  if (v === 'learn') renderCard();
+};
+
+/* ---------- 翻卡學習 ---------- */
+let deck = [], pos = 0;
+function buildDeck(reshuffle) {
+  let list = inCat($('l-cat').value);
+  if ($('l-mode').value === 'unknown') list = list.filter(c => !known.has(c.id));
+  deck = reshuffle ? shuffle(list) : list;
+  pos = 0; renderCard();
+}
+function renderCard() {
+  const total = inCat($('l-cat').value);
+  const kn = total.filter(c => known.has(c.id)).length;
+  $('l-prog').style.width = (total.length ? kn / total.length * 100 : 0) + '%';
+  const empty = !deck.length;
+  ['l-prev', 'l-next', 'l-yes', 'l-no'].forEach(id => $(id).disabled = empty);
+  $('card').classList.remove('flip');
+  if (empty) {
+    $('l-info').textContent = `已記住 ${kn} / ${total.length} · 這個範圍沒有需要複習的卡片 🎉`;
+    $('c-img').removeAttribute('src'); $('c-img2').removeAttribute('src');
+    $('c-name').textContent = ''; $('c-meta').textContent = ''; return;
+  }
+  const c = deck[pos];
+  $('l-info').textContent = `第 ${pos + 1} / ${deck.length} 張 · 已記住 ${kn} / ${total.length}`;
+  $('c-img').src = c.img; $('c-img2').src = c.img;
+  $('c-name').textContent = c.name;
+  $('c-meta').textContent = `${c.cat} · CNS 11567 ${c.tbl}` + (known.has(c.id) ? ' · ✔ 已記住' : '');
+}
+const go = d => { if (!deck.length) return; pos = (pos + d + deck.length) % deck.length; renderCard(); };
+function mark(yes) {
+  if (!deck.length) return;
+  const c = deck[pos];
+  yes ? known.add(c.id) : known.delete(c.id);
+  saveKnown();
+  if ($('l-mode').value === 'unknown' && yes) { deck.splice(pos, 1); if (pos >= deck.length) pos = 0; }
+  else if (deck.length) pos = (pos + 1) % deck.length;
+  renderCard();
+}
+$('card').onclick = () => $('card').classList.toggle('flip');
+$('l-prev').onclick = () => go(-1); $('l-next').onclick = () => go(1);
+$('l-yes').onclick = () => mark(true); $('l-no').onclick = () => mark(false);
+$('l-shuffle').onclick = () => buildDeck(true);
+$('l-cat').onchange = $('l-mode').onchange = () => buildDeck(false);
+$('l-reset').onclick = e => { e.preventDefault(); if (confirm('確定清除所有「記住了」的紀錄?')) { known.clear(); saveKnown(); buildDeck(false); } };
+document.addEventListener('keydown', e => {
+  if ($('v-learn').classList.contains('hide') || /SELECT|INPUT/.test(e.target.tagName)) return;
+  if (e.key === ' ') { e.preventDefault(); $('card').classList.toggle('flip'); }
+  else if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1);
+  else if (e.key === 'ArrowUp') { e.preventDefault(); mark(true); } else if (e.key === 'ArrowDown') { e.preventDefault(); mark(false); }
+});
+
+/* ---------- 問答遊戲 ---------- */
+let qType = 'img2name', qNum = 10, Q = null;
+function seg(id, cb) {
+  $(id).onclick = e => {
+    const v = e.target.dataset.v; if (v === undefined) return;
+    [...$(id).children].forEach(b => b.classList.toggle('on', b === e.target)); cb(v);
+  };
+}
+seg('s-type', v => { qType = v; showBest(); });
+seg('s-num', v => { qNum = +v; showBest(); });
+$('q-cat').onchange = showBest;
+const bestKey = () => `best.${qType}.${$('q-cat').value}.${qNum}`;
+function showBest() {
+  const b = store.get(bestKey(), null);
+  $('q-best').textContent = b ? `這組設定的最佳成績:${b.s} / ${b.n} 題` : '這組設定還沒有成績,來挑戰看看!';
+}
+function pickOptions(card, n, byImg) {
+  const pool = shuffle(CARDS.filter(c => c.name !== card.name));
+  const same = pool.filter(c => c.cat === card.cat);
+  const rest = pool.filter(c => c.cat !== card.cat);
+  const opts = [card, ...same.slice(0, n - 1)];
+  for (const c of rest) { if (opts.length >= n) break; opts.push(c); }
+  return shuffle(opts);
+}
+function startQuiz(list) {
+  list = shuffle(list);
+  const cat = $('q-cat').value;
+  Q = { items: qNum && !Q?.redo ? list.slice(0, qNum) : list, i: 0, score: 0, wrong: [], cat };
+  show('play'); nextQ();
+}
+function show(w) { ['setup', 'play', 'end'].forEach(n => $('q-' + n).classList.toggle('hide', n !== w)); }
+function nextQ() {
+  const c = Q.items[Q.i];
+  const type = qType === 'mix' ? (Math.random() < .5 ? 'img2name' : 'name2img') : qType;
+  Q.cur = { c, type, done: false };
+  $('q-no').textContent = `第 ${Q.i + 1} / ${Q.items.length} 題`;
+  $('q-sc').textContent = `得分 ${Q.score}`;
+  $('q-prog').style.width = (Q.i / Q.items.length * 100) + '%';
+  $('q-fb').textContent = ''; $('q-fb').className = 'fb'; $('q-next').classList.add('hide');
+  const opts = pickOptions(c, 4);
+  const badge = `<div class="qcat"><span>${c.cat}</span></div>`;
+  let h;
+  if (type === 'img2name') {
+    h = badge + `<div class="qimg"><img src="${c.img}" alt="圖例"></div><div class="opts">` +
+      opts.map(o => `<button class="opt" data-id="${o.id}">${o.name}</button>`).join('') + '</div>';
+  } else {
+    h = badge + `<div class="qtext">${c.name}</div><div class="opts img">` +
+      opts.map(o => `<button class="opt" data-id="${o.id}"><img src="${o.img}" alt=""></button>`).join('') + '</div>';
+  }
+  $('q-body').innerHTML = h;
+}
+$('q-body').onclick = e => {
+  const b = e.target.closest('.opt'); if (!b || Q.cur.done) return;
+  Q.cur.done = true;
+  const c = Q.cur.c, ok = +b.dataset.id === c.id;
+  document.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (+x.dataset.id === c.id) x.classList.add('right'); });
+  if (ok) { Q.score++; $('q-fb').textContent = '✔ 答對了!'; $('q-fb').classList.add('g'); }
+  else { b.classList.add('wrong'); Q.wrong.push(c); $('q-fb').textContent = `✘ 正確答案:${c.name}`; $('q-fb').classList.add('b'); }
+  $('q-sc').textContent = `得分 ${Q.score}`;
+  const last = Q.i + 1 >= Q.items.length;
+  $('q-next').textContent = last ? '看結果' : '下一題 →';
+  $('q-next').classList.remove('hide'); $('q-next').focus();
+};
+$('q-next').onclick = () => { Q.i++; Q.i >= Q.items.length ? endQuiz() : nextQ(); };
+function endQuiz() {
+  show('end');
+  const n = Q.items.length, s = Q.score;
+  $('e-title').textContent = Q.redo ? '錯題練習結果' : '本次成績';
+  $('e-score').textContent = `${s} / ${n}`;
+  const pct = s / n;
+  let msg = pct === 1 ? '🏆 全對!太強了' : pct >= .8 ? '👍 很穩,再衝一次滿分' : pct >= .6 ? '💪 不錯,多練幾次會更熟' : '📖 先回翻卡學習熟悉一下再來';
+  if (!Q.redo) {
+    const k = `best.${qType}.${Q.cat}.${qNum}`, b = store.get(k, null);
+    if (!b || s / n > b.s / b.n) { store.set(k, { s, n }); if (b) msg += '(新紀錄!)'; }
+  }
+  $('e-msg').textContent = msg;
+  $('e-wrong').innerHTML = Q.wrong.length
+    ? `<p style="font-weight:600;margin:14px 0 0">答錯的圖例(${Q.wrong.length})</p><div class="wlist">` +
+      Q.wrong.map(c => `<div class="cell"><div class="im"><img src="${c.img}" alt=""></div><div class="nm">${c.name}</div></div>`).join('') + '</div>'
+    : '';
+  $('e-redo').classList.toggle('hide', !Q.wrong.length);
+  $('q-prog').style.width = '100%';
+}
+$('q-start').onclick = () => { Q = null; startQuiz(inCat($('q-cat').value)); };
+$('e-retry').onclick = () => { const cat = Q.cat; Q = null; startQuiz(inCat(cat)); };
+$('e-redo').onclick = () => { const w = Q.wrong, cat = Q.cat; Q = { redo: true }; startQuiz(w); Q.redo = true; Q.cat = cat; };
+$('e-back').onclick = () => { show('setup'); showBest(); };
+
+/* ---------- 圖例總覽 ---------- */
+function renderBook() {
+  const cat = $('b-cat').value, q = $('b-q').value.trim().toLowerCase();
+  const list = inCat(cat).filter(c => !q || c.name.toLowerCase().includes(q));
+  $('b-info').textContent = `共 ${list.length} 個圖例(綠框 = 已在翻卡學習中記住)`;
+  $('b-grid').innerHTML = list.map(c =>
+    `<div class="cell${known.has(c.id) ? ' known' : ''}"><div class="im"><img loading="lazy" src="${c.img}" alt=""></div>` +
+    `<div class="nm">${c.name}</div><div class="ct">${c.cat} · ${c.tbl}</div></div>`).join('');
+}
+$('b-cat').onchange = renderBook; $('b-q').oninput = renderBook;
+
+buildDeck(true); showBest();
+</script>
+</body>
+</html>
